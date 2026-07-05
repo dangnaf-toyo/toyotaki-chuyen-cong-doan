@@ -324,6 +324,24 @@ function renderScanned(){
 
   document.getElementById("msg").style.display = "none";
   checkReady();
+
+  layViTriHienTaiVaTuDien(scannedData.tagNo);
+}
+
+/* ─── Tra vị trí hiện tại của Tag No, tự điền "Công đoạn giao"    */
+/* (vẫn cho sửa tay). Chạy song song, không chặn phần còn lại của  */
+/* form nếu mạng chậm hoặc lỗi.                                    */
+function layViTriHienTaiVaTuDien(tagNo){
+  fetch(APPS_SCRIPT_URL + "?action=vitri&tagNo=" + encodeURIComponent(tagNo))
+    .then(function(res){ return res.json(); })
+    .then(function(r){
+      if (!r.ok || !r.congDoanHienTai) return;
+      var sel = document.getElementById("congDoanGiao");
+      if (sel.value) return; // người dùng đã lỡ tự chọn tay trong lúc chờ -> không đè
+      sel.value = r.congDoanHienTai;
+      onCongDoanGiaoChange();
+    })
+    .catch(function(){ /* im lặng bỏ qua, người dùng vẫn tự chọn Công đoạn giao được */ });
 }
 
 /* ─── Kiểm tra đủ điều kiện để bật nút Chuyển Công Đoạn ───────── */
@@ -390,6 +408,12 @@ function resetForNext(){
   document.getElementById("emptyHint").style.display = "block";
   document.getElementById("soLuong").value = "";
   document.getElementById("btnSubmit").disabled = true;
+
+  // Công đoạn giao gắn với từng Tag No (tự dò theo vị trí hiện tại ở
+  // lần quét sau) nên phải xoá — khác với Công đoạn/Người nhận vẫn
+  // giữ nguyên để đỡ phải chọn lại khi chuyển nhiều tem liên tiếp.
+  document.getElementById("congDoanGiao").value = "";
+  onCongDoanGiaoChange();
 }
 
 var msgToken = 0;
